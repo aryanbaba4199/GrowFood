@@ -2,7 +2,7 @@ import React from 'react';
 import { View, FlatList, Dimensions, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation, NavigationProp, RouteProp } from '@react-navigation/native';
 import { Card, Title, Paragraph, Button, Avatar } from 'react-native-paper';
-import { RootStackParamList } from '../../Navigation/navigationRoute';
+import { RootStackParamList } from './interface/rootStackParams';
 
 interface ProductItemProps {
   item: any;
@@ -17,7 +17,7 @@ interface ProductProps {
 
 const Product = ({ route }: ProductProps) => {
   const { products } = route.params;
-  console.log("Product component products:", products);
+  
 
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const screenWidth = Dimensions.get('window').width;
@@ -26,7 +26,7 @@ const Product = ({ route }: ProductProps) => {
     const itemWidth = screenWidth / 2 - 16;
 
     const handleProductPress = (item: any) => {
-      navigation.navigate('ProductDetails', { product: item }); // Pass product data
+      navigation.navigate('ProductDetails', { product: item });
     };
 
     return (

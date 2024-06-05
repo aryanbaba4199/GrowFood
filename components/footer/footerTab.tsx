@@ -8,6 +8,7 @@ import OrdersScreen from '../menu/order';
 import ProductStackNavigator from '../../Navigation/navigationRoute';
 import ProfileScreen from '../menu/profile';
 import { Appbar } from 'react-native-paper'; // Import Appbar
+import AppNavigators from '../../Navigation/appNavigator';
 
 const Tab = createBottomTabNavigator();
 
@@ -69,7 +70,7 @@ function AppNavigator() {
         <Tab.Screen name="Categories" component={CategoriesScreen} />
         <Tab.Screen name="Products" component={ProductStackNavigator} />
         <Tab.Screen name="Orders" component={OrdersScreen} />
-        <Tab.Screen name="Profile" component={ProfileScreen} />
+        <Tab.Screen name="Profile" component={AppNavigators} />
       </Tab.Navigator>
     </NavigationContainer>
   );

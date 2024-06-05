@@ -5,7 +5,8 @@ import ProductDetails from '../components/product/productDetails';
 import { useDispatch, useSelector } from 'react-redux';
 import { getProducts } from '../redux/actions/productActions';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Appbar } from 'react-native-paper'; // Import Appbar
+import { RootStackParamList } from '../components/menu/interface/rootStackParams';
+
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -30,7 +31,7 @@ const ProductStackNavigator = () => {
         name="Products"
         component={Product}
         initialParams={{ products }}
-        options={{ headerShown: false }} // Hide the header
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="ProductDetails"
@@ -47,7 +48,3 @@ export interface PageProps<T extends keyof RootStackParamList> {
   navigation: NativeStackNavigationProp<RootStackParamList, T>;
 }
 
-export type RootStackParamList = {
-  Products: { products: any[] }; // Define the parameter type for Products screen
-  ProductDetails: { product: any }; // Define the parameter type for ProductDetails screen
-};

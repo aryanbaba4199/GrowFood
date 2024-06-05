@@ -1,12 +1,14 @@
   import { combineReducers } from 'redux';
   import productReducer from './reducers/productReducers';
+  import userAuthReducer from './reducers/userAuthReducer';
   import { configureStore } from '@reduxjs/toolkit';
 
   const rootReducer = combineReducers({
     products: productReducer,
+    users : userAuthReducer,
   });
 
-  // Make sure applyMiddleware is used correctly
+ 
   const store = configureStore({
     reducer: rootReducer
   });

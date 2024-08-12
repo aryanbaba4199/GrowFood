@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { Text, TextInput, Button } from 'react-native-paper';
-import { useDispatch } from 'react-redux';
-import auth from '@react-native-firebase/auth';
-import { createUser, getUser } from '../../redux/actions/userAuthAction';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../menu/interface/rootStackParams';
+
+const API_URL = "http://10.0.2.2:5000/api/users";
 
 const AuthScreen: React.FC = () => {
   const [authType, setAuthType] = useState('SignIn');
@@ -17,44 +18,67 @@ const AuthScreen: React.FC = () => {
     mobile: '',
     email: '',
     password: '',
-    address: {
-      address: '',
-      city: '',
-      state: '',
-      zip: '',
-    },
   });
 
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-
-  const dispatch : any = useDispatch();
 
   useEffect(() => {
     setUserData((prevData) => ({ ...prevData, email, password }));
   }, [email, password]);
 
-  const handleAuth = async () => {
-    console.log(userData);
-    if (authType === 'SignIn') {
-      try {
-        const user = await auth().signInWithEmailAndPassword(email, password);
-        
-        Alert.alert("Log in successfully")
-        navigation.navigate("Profile")
-      } catch (err) {
-        console.error('Sign in error:', err);
+  useEffect(() => {
+    const loadToken = async () => {
+      const storedToken = await AsyncStorage.getItem('userToken');
+      if (storedToken) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
       }
-    } else {
+    };
+    loadToken();
+  }, []);
+
+  const handleAuth = async () => {
+    if (authType === 'SignIn') {
+      if (!email || !password) {
+        Alert.alert("Please fill in all fields");
+        return;
+      }
       try {
-        const userCredential = await auth().createUserWithEmailAndPassword(email, password);
-        await userCredential.user.updateProfile({
-          displayName: userData.name,
+        const res = await axios.post(`${API_URL}/login`, {
+          email,
+          password
         });
         
-
-        dispatch(createUser(userData));
-        Alert.alert('User created successfully');
-        navigation.navigate("Profile")
+        if (res.status === 200) {
+          const { token } = res.data;
+          await AsyncStorage.setItem('userToken', token);
+          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          Alert.alert("Logged in Successfully");
+          navigation.goBack();
+        } else {
+          Alert.alert("Login Failed");
+        }
+      } catch (err) {
+        console.error('Sign in error:', err);
+        Alert.alert("Something went wrong");
+      }
+    } else {
+      if (!userData.name || !userData.mobile || !userData.email || !userData.password) {
+        Alert.alert("Please fill in all fields");
+        return;
+      }
+      try {
+        const res = await axios.post(`${API_URL}/register`, {
+          name: userData.name,
+          email: userData.email,
+          password: userData.password,
+          mobile: userData.mobile
+        });
+        if (res.status === 200) {
+          Alert.alert("Account Created Successfully");
+          setAuthType("SignIn");
+        } else if (res.status === 409) {
+          Alert.alert("Email Already Registered");
+        }
       } catch (err) {
         console.error('Sign up error:', err);
         Alert.alert('Something went wrong');
@@ -79,31 +103,6 @@ const AuthScreen: React.FC = () => {
               keyboardType='numeric'
               value={userData.mobile}
               onChangeText={(text) => setUserData({ ...userData, mobile: text })}
-            />
-            <TextInput
-              label="Address"
-              style={styles.input}
-              value={userData.address.address}
-              onChangeText={(text) => setUserData({ ...userData, address: { ...userData.address, address: text } })}
-            />
-            <TextInput
-              label="City"
-              style={styles.input}
-              value={userData.address.city}
-              onChangeText={(text) => setUserData({ ...userData, address: { ...userData.address, city: text } })}
-            />
-            <TextInput
-              label="State"
-              style={styles.input}
-              value={userData.address.state}
-              onChangeText={(text) => setUserData({ ...userData, address: { ...userData.address, state: text } })}
-            />
-            <TextInput
-              label="Zip"
-              keyboardType='numeric'
-              style={styles.input}
-              value={userData.address.zip}
-              onChangeText={(text) => setUserData({ ...userData, address: { ...userData.address, zip: text } })}
             />
           </>
         )}

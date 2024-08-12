@@ -1,34 +1,61 @@
-import axios from 'axios';
+import axios from "axios";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const GET_USERS = 'GET_USERS';
-export const GET_USER = 'GET_USER';
-export const CREATE_USER = 'CREATE_USER';
+export const LOGIN_SUCCESS = "LOGIN_SUCCESS";
+export const LOGIN_FAIL = "LOGIN_FAIL";
+export const REGISTER_SUCCESS = "REGISTER_SUCCESS";
+export const REGISTER_FAIL = "REGISTER_FAIL";
+export const LOGOUT = "LOGOUT";
+export const FETCH_USER_SUCCESS = "FETCH_USER_SUCCESS";
+export const FETCH_USER_FAIL = "FETCH_USER_FAIL";
 
-const API_URL = 'http://10.0.2.2:5000/api/users';
+const API_URL = "http://10.0.2.2:5000/api/users";
 
-export const getUser = (email) => async (dispatch) => {
+export const login = (email, password) => async (dispatch) => {
   try {
-    const res = await axios.get(`${API_URL}/${email}`);
-    dispatch({ type: GET_USER, payload: res.data });
-  } catch (err) {
-    console.error(err);
+    const response = await axios.post(`${API_URL}/login`, { email, password });
+    const { token, user } = response.data;
+    await AsyncStorage.setItem("token", token);
+    dispatch({ type: LOGIN_SUCCESS, payload: token });
+    dispatch({ type: FETCH_USER_SUCCESS, payload: user });
+    alert("Logged in successfully");
+  } catch (error) {
+    console.error("Login error:", error);
+    dispatch({ type: LOGIN_FAIL });
+    alert("Login failed");
   }
 };
 
-export const getUsers = () => async (dispatch) => {
+export const register = (userData) => async (dispatch) => {
   try {
-    const res = await axios.get(`${API_URL}/AdminAccess`);
-    dispatch({ type: GET_USERS, payload: res.data });
-  } catch (err) {
-    console.error(err);
+    await axios.post(`${API_URL}/register`, userData);
+    dispatch({ type: REGISTER_SUCCESS });
+    alert("User registered successfully");
+  } catch (error) {
+    console.error("Registration error:", error);
+    dispatch({ type: REGISTER_FAIL });
+    alert("Registration failed");
   }
 };
 
-export const createUser = (userData) => async (dispatch) => {
+export const logout = () => async (dispatch) => {
+  await AsyncStorage.removeItem("token");
+  dispatch({ type: LOGOUT });
+};
+
+export const fetchUserDetails = () => async (dispatch) => {
   try {
-    const res = await axios.post(API_URL, userData);
-    dispatch({ type: CREATE_USER, payload: res.data });
-  } catch (err) {
-    console.error(err);
+    const token = await AsyncStorage.getItem("token");
+    if (token) {
+      const response = await axios.get(`${API_URL}/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      dispatch({ type: FETCH_USER_SUCCESS, payload: response.data });
+    }
+  } catch (error) {
+    console.error("Failed to fetch user details:", error);
+    dispatch({ type: FETCH_USER_FAIL });
   }
 };

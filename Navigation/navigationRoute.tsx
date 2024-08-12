@@ -1,41 +1,35 @@
-import React, { useEffect, useState } from 'react';
+// src/Navigation/navigationRoute.tsx
+import React, { useEffect } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import Product from '../components/menu/product';
-import ProductDetails from '../components/product/productDetails';
+import ProductList from '../components/menu/product';
+import ProductDetailsScreen from '../components/product/productDetails';
+import CheckoutScreen from '../components/product/checkOut';
 import { useDispatch, useSelector } from 'react-redux';
 import { getProducts } from '../redux/actions/productActions';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../components/menu/interface/rootStackParams';
-
+import NewProductSlider from '../components/home/newProduct';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
 const ProductStackNavigator = () => {
-  const dispatch: any = useDispatch();
-  const [loading, setLoading] = useState(true);
+  const dispatch : any = useDispatch();
+  const products = useSelector((state: any) => state.products.products);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      await dispatch(getProducts());
-      setLoading(false);
+    const fetchProducts = () => {
+      dispatch(getProducts());
     };
-
     fetchProducts();
   }, [dispatch]);
 
-  const products = useSelector((state: any) => state.products.products);
-
   return (
     <Stack.Navigator>
+      <Stack.Screen name="ProductsList" component={ProductList} initialParams={{ products }} options={{ headerShown: false }} />
+      <Stack.Screen name="ProductDetails" component={ProductDetailsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ headerShown: false }} />
       <Stack.Screen
-        name="Products"
-        component={Product}
-        initialParams={{ products }}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="ProductDetails"
-        component={ProductDetails}
+        name="NewProduct"
+        component={(props : any) => <NewProductSlider {...props} products={products} />}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>
@@ -43,8 +37,3 @@ const ProductStackNavigator = () => {
 };
 
 export default ProductStackNavigator;
-
-export interface PageProps<T extends keyof RootStackParamList> {
-  navigation: NativeStackNavigationProp<RootStackParamList, T>;
-}
-

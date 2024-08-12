@@ -8,6 +8,7 @@ import SliderMenu from '../home/sliderMenu';
 import Search from '../NavMenu/search';
 import BrandSlider from '../home/brands';
 import NewArrivalSlider from '../home/newProduct';
+import auth from "@react-native-firebase/auth"
 
 const HomeScreen: React.FC = () => {
   const dispatch : any = useDispatch();
@@ -16,6 +17,7 @@ const HomeScreen: React.FC = () => {
     dispatch(getProducts());
     dispatch(getBrands());
     dispatch(getCategories());
+    auth();
   }, [dispatch]);
 
   const products = useSelector((state: any) => state.products.products);
@@ -29,9 +31,9 @@ const HomeScreen: React.FC = () => {
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <Search />
-      <SliderMenu category={categories} />
+      <SliderMenu category={categories} products={products}/>
       <ImageCarousel />
-      <BrandSlider brands={brands} />
+      <BrandSlider brands={brands} products = {products}/>
       <NewArrivalSlider products={products} />
     </ScrollView>
   );

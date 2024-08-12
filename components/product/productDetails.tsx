@@ -1,28 +1,36 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  ScrollView,
-  Dimensions,
-  StyleSheet,
-  FlatList,
-} from 'react-native';
-import { RouteProp, useRoute } from '@react-navigation/native';
-import { Card, Title, Paragraph, Button, Chip } from 'react-native-paper';
-import { RootStackParamList } from '../../Navigation/navigationRoute';
+import { View, ScrollView, Dimensions, StyleSheet, FlatList, Alert } from 'react-native';
+import { RouteProp, useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
+import { Card, Title, Paragraph, Button, DataTable, TextInput } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { RootStackParamList } from '../menu/interface/rootStackParams';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProductDetails = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'ProductDetails'>>();
-  const { product } = route.params;
+  const { product  } = route.params;
+
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   const [rate, setRate] = useState(0);
-  const [images, setImages] = useState<string[]>([]); // State to store product images
+  const [images, setImages] = useState<string[]>([]);
+  const [quantity, setQuantity] = useState(product.minimumOrderQty);
+
+  const handleIncrement = () => {
+    setQuantity(quantity + 1);
+  };
+
+  const handleDecrement = () => {
+    if (quantity > 1) {
+      setQuantity(quantity - 1);
+    }
+  };
 
   useEffect(() => {
     const price = product.price || 1000;
     const discount = product.discount || 5;
     const rate = price - ((price * discount) / 100);
-    setRate(rate); // Format rate with two decimal places
+    setRate(rate);
     setImages(product.image || []);
   }, [product]);
 
@@ -32,6 +40,17 @@ const ProductDetails = () => {
         <Card.Cover style={styles.image} source={{ uri: item }} />
       </Card>
     );
+  };
+
+  const handleBuy = async() => {
+    const user = await AsyncStorage.getItem('userToken');
+   
+    if(user){
+      navigation.navigate('Checkout', { product, quantity });
+    }else{
+      Alert.alert("You must be logged in");
+      navigation.navigate('SignIn');
+    }
   };
 
   return (
@@ -47,15 +66,26 @@ const ProductDetails = () => {
             contentContainerStyle={styles.imageList}
           />
         </View>
+
         <Card style={styles.card}>
           <Card.Content>
+            <View style={styles.quantityContainer}>
+              <Icon name='minus-circle' style={styles.quantityButton} onPress={handleDecrement} />
+              <TextInput
+                style={styles.quantityInput}
+                value={quantity.toString()}
+                onChangeText={(text) => setQuantity(parseInt(text))}
+                keyboardType="numeric"
+              />
+              <Icon name='plus-circle' style={styles.quantityButton} onPress={handleIncrement} />
+            </View>
             <Title style={styles.title}>{product.name}</Title>
             <Paragraph style={styles.description}>{product.description}</Paragraph>
             <View style={styles.rateContainer}>
               <Paragraph style={styles.discountChip}>{product.discount || 5}% Off</Paragraph>
               <View style={styles.priceContainer}>
                 <Icon name='rupee' size={17} style={styles.priceSymbol} />
-                <Paragraph style={styles.price}>{product.price || 1000}</Paragraph>
+                <Paragraph style={styles.strikethroughPrice}>{product.price || 1000}</Paragraph>
               </View>
               <View style={styles.rateContainer}>
                 <Icon name='rupee' style={styles.rateSymbol} size={23} />
@@ -75,7 +105,7 @@ const ProductDetails = () => {
       </ScrollView>
       <View style={styles.buttonContainer}>
         <Button mode="contained" style={styles.addToCartButton}>Add to Cart</Button>
-        <Button mode="contained" style={styles.buyNowButton}>Buy Now</Button>
+        <Button mode="contained" style={styles.buyNowButton} onPress={handleBuy}>Buy Now</Button>
       </View>
     </View>
   );
@@ -87,7 +117,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
   },
   scrollContent: {
-    paddingBottom: 100, // Ensure there's enough space at the bottom for the fixed buttons
+    paddingBottom: 100,
   },
   imageListContainer: {
     alignItems: 'center',
@@ -106,8 +136,8 @@ const styles = StyleSheet.create({
   },
   image: {
     width: Dimensions.get('window').width - 40,
-    height: 300,
-    resizeMode: 'cover',
+    height: Dimensions.get('window').width - 70,
+    resizeMode: 'contain',
   },
   card: {
     margin: 20,
@@ -118,10 +148,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: 'black',
+    marginTop: 10,
     textAlign: 'center',
   },
   description: {
     fontSize: 16,
+    marginTop: 10,
     textAlign: 'center',
     color: '#555',
     marginBottom: 20,
@@ -135,9 +167,9 @@ const styles = StyleSheet.create({
   discountChip: {
     backgroundColor: 'darkgreen',
     color: 'white',
-    paddingHorizontal : 10,
-    paddingVertical : 5,
-    borderRadius : 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
   },
   priceContainer: {
     flexDirection: 'row',
@@ -146,10 +178,11 @@ const styles = StyleSheet.create({
   priceSymbol: {
     color: 'grey',
   },
-  price: {
+  strikethroughPrice: {
     fontSize: 15,
     color: 'grey',
     marginLeft: 2,
+    textDecorationLine: 'line-through',
   },
   rateSymbol: {
     color: 'darkblue',
@@ -190,6 +223,30 @@ const styles = StyleSheet.create({
     width: '40%',
     fontSize: 18,
     borderRadius: 5,
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    fontSize: 22,
+    justifyContent: 'center',
+    paddingVertical: 10,
+  },
+  quantityButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    fontSize: 37,
+    color: 'black',
+  },
+  quantityInput: {
+    width: 100,
+    marginHorizontal: 10,
+    marginRight: 20,
+    borderRadius: 10,
+    height: 40,
+    textAlign: 'center',
+    fontSize: 22,
   },
 });
 

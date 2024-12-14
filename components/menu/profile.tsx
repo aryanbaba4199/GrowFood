@@ -1,12 +1,16 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { View, StyleSheet, Alert, Text } from 'react-native'; // Import Text from react-native
-import { List, Divider, Avatar, Title, Subheading, TextInput, Button, IconButton } from 'react-native-paper';
+import { View, StyleSheet, Alert, Text, Linking } from 'react-native'; // Import Text from react-native
+import { List, Divider, Avatar, Title, Subheading, TextInput, Button, IconButton} from 'react-native-paper';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from '../menu/interface/rootStackParams';
 import { getUserApi } from '../API';
 import { GlobalContext } from '../../App';
+import { ScrollView } from 'react-native-gesture-handler';
+import Icon from 'react-native-vector-icons/Feather';
+import EditProfile from '../user/EditProfile';
+import { globalStyles } from '../../globalStyles';
 
 
 
@@ -24,11 +28,10 @@ interface Address {
 
 const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  const [user, setUser] = useState<{ id: string; name: string; email: string; avatar: string | null }>({ id: '', name: '', email: '', avatar: null });
-  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [profileEdit, setProfileEdit] = useState(false);
   const [expandedAddresses, setExpandedAddresses] = useState<{ [key: string]: boolean }>({});
   const [showAddressForm, setShowAddressForm] = useState(false);
-  const { userDetails, setUserDetails } = useContext(GlobalContext);
+  const { userDetails, address } = useContext(GlobalContext);
 
   const [newAddress, setNewAddress] = useState({
     name: '',
@@ -40,44 +43,13 @@ const ProfileScreen: React.FC = () => {
     landMark: '',
   });
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const token = await AsyncStorage.getItem('userToken');
-        if (token) {
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          const res = await axios.get(`${getUserApi}/me`);
-          if (res.status === 200) {
-            setUserDetails({ id: res.data._id, name: res.data.name, email: res.data.email, avatar: 'https://example.com/default-profile-image.jpg'})
-            setUser({ id: res.data._id, name: res.data.name, email: res.data.email, avatar: 'https://example.com/default-profile-image.jpg' });
-          } else {
-            Alert.alert("Failed to fetch user data");
-          }
-        } else {
-          navigation.navigate('SignIn');
-        }
-      } catch (error) {
-        console.error('Fetch user error:', error);
-        Alert.alert("Something went wrong while fetching user data");
-      }
-    };
 
-    fetchUser();
-  }, []);
 
-  const handleAdresse = async () => {
-    try {
-      const res = await axios.get(`${getUserApi}/getAddress/${user.id}`);
-      if (res.status === 200) {
-        AsyncStorage.setItem('User', JSON.stringify(res.data));
-        setAddresses(res.data);
-        console.log(res.data);
-      }
-    } catch (e) {
-      Alert.alert('Something went wrong');
-      console.error(e);
-    }
-  };
+  
+
+
+
+ 
 
   const handleSignOut = async () => {
     try {
@@ -91,18 +63,18 @@ const ProfileScreen: React.FC = () => {
     }
   };
 
+
   const handleSignIn = () => {
     navigation.navigate('SignIn');
   };
 
   const handleAddAddress = async () => {
     try {
-      const res = await axios.post(`${getUserApi}/createAddress`, { address: { ...newAddress, userId: user.id } });
+      const res = await axios.post(`${getUserApi}/createAddress`, { address: { ...newAddress, userId: userDetails.id } });
       if (res.status === 200) {
         Alert.alert("Address added successfully");
         setShowAddressForm(false);
         setNewAddress({ name: '', mobile: '', locality: '', city: '', state: '', zip: '', landMark: '' });
-        handleAdresse(); // Refresh addresses
       } else {
         Alert.alert("Failed to add address");
       }
@@ -120,57 +92,75 @@ const ProfileScreen: React.FC = () => {
   };
 
   return (
+    <>
+    {profileEdit ? 
+    <EditProfile setProfile= {setProfileEdit}/> :
+    <ScrollView>
     <View style={styles.container}>
+     
       <View style={styles.header}>
         <Avatar.Image
           size={100}
+          
           source={{
-            uri: user.avatar as any,
+            uri: userDetails.avatar as any,
           }}
         />
-        <Title style={styles.title}>{user.name}</Title>
-        <Subheading style={styles.subtitle}>{user.email}</Subheading>
+       
+        
+        <View style={{
+          display: 'flex',
+          flexDirection: 'row',
+          marginLeft : 55,
+        }}>
+        <Title style={styles.title}>{userDetails.name}</Title>
+          <Icon name = 'edit' size={24} style={{marginLeft : 30}} onPress={()=>setProfileEdit(true)}/>
       </View>
+        <Subheading style={styles.subtitle}>{userDetails.email}</Subheading>
+      </View>
+      
+  
       <View style={styles.list}>
         <List.Section>
-          {user.email ? 
+          {userDetails.email ? 
             <List.Item
               title="Sign out"
-              left={(props) => <List.Icon {...props} icon="logout" />}
+              left={(props) => <List.Icon {...props} icon="logout" color='#15892e' />}
               onPress={handleSignOut}
             />
             : 
             <List.Item
               title="Sign In"
-              left={(props) => <List.Icon {...props} icon="login" />}
+              left={(props) => <List.Icon {...props} icon="login" color='#15892e' />}
               onPress={handleSignIn}
             />
           }
           <Divider />
           <List.Item
             title="Addresses"
-            left={(props) => <List.Icon {...props} icon="map-marker" />}
+            left={(props) => <List.Icon {...props} icon="map-marker" color='#15892e'/>}
             right={(props) => <IconButton {...props} icon="plus" onPress={() => setShowAddressForm(!showAddressForm)} />}
-            onPress={handleAdresse}
+            
           />
-          {addresses.map((address) => (
+          {address?.map((address : any) => (
             <View key={address._id}>
               <List.Item
                 title={address.locality}
                 description={`${address.city}, ${address.state} - ${address.zip}`}
-                left={(props) => <List.Icon {...props} icon="map-marker" />}
+                left={(props) => <List.Icon {...props} icon="map-marker" color='#15892e'/>}
                 right={(props) => <IconButton {...props} icon={expandedAddresses[address._id] ? "chevron-up" : "chevron-down"} onPress={() => toggleAddress(address._id)} />}
               />
               {expandedAddresses[address._id] && (
                 <View style={styles.addressDetails}>
                   <Text>Name: {address.name}</Text>
                   <Text>Mobile: {address.mobile}</Text>
-                  <Text>Locality: {address.locality}</Text>
-                  <Text>City: {address.city}</Text>
-                  <Text>State: {address.state}</Text>
-                  <Text>Zip: {address.zip}</Text>
-                  <Text>Landmark: {address.landMark}</Text>
-                  <Button onPress={() => toggleAddress(address._id)}>Collapse</Button>
+                  <View style={{display : 'flex', flexDirection : 'row', marginTop : 2, gap : 2}}>
+                  <Text>Address {address.locality}</Text>
+                  <Text>{address.landMark}</Text>
+                  <Text>{address.city}</Text>
+                  <Text>{address.state}</Text>
+                  <Text>- {address.zip}</Text>
+                  </View>
                 </View>
               )}
               <Divider />
@@ -179,14 +169,16 @@ const ProfileScreen: React.FC = () => {
           <Divider />
           <List.Item
             title="Orders"
-            left={(props) => <List.Icon {...props} icon="shopping" />}
-            onPress={() => console.log('Orders Pressed')}
+            left={(props) => <List.Icon {...props} icon="shopping" color='#15892e'/>}
+            onPress={() => {
+              navigation.navigate('Orders' as any);
+            }}
           />
           <Divider />
           <List.Item
             title="About us"
-            left={(props) => <List.Icon {...props} icon="information" />}
-            onPress={() => console.log('About Us Pressed')}
+            left={(props) => <List.Icon {...props} icon="information" color='#15892e' />}
+            onPress={() => Linking.openURL('https://www.thegrowfood.com/aboutus')}
           />
         </List.Section>
       </View>
@@ -241,6 +233,10 @@ const ProfileScreen: React.FC = () => {
         </View>
       )}
     </View>
+    </ScrollView>
+    
+}
+    </>
   );
 };
 

@@ -1,5 +1,6 @@
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { usersAPi } from "../../components/API";
 
 export const LOGIN_SUCCESS = "LOGIN_SUCCESS";
 export const LOGIN_FAIL = "LOGIN_FAIL";
@@ -9,7 +10,7 @@ export const LOGOUT = "LOGOUT";
 export const FETCH_USER_SUCCESS = "FETCH_USER_SUCCESS";
 export const FETCH_USER_FAIL = "FETCH_USER_FAIL";
 
-const API_URL = "http://10.0.2.2:5000/api/users";
+const API_URL = usersAPi;
 
 export const login = (email, password) => async (dispatch) => {
   try {

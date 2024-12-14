@@ -1,14 +1,15 @@
 import axios from "axios";
+import { OrdersApi } from "../../components/API";
 
 export const CREATE_ORDER = "CREATE_ORDER";
 export const FETCH_ORDER = "FETCH_ORDER";
 export const FETCH_ORDERS = "FETCH_ORDERS";
 
-const API_URL = "http://10.0.2.2:5000/api/orders"; 
+const API_URL = OrdersApi;
 
 export const createOrder = (order) => async dispatch => {
     try {
-        console.log(order);
+
         const res = await axios.post(`${API_URL}/create`, { order });
         dispatch({ type: CREATE_ORDER, payload: res.data });
     } catch (e) {

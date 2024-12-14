@@ -1,9 +1,12 @@
-import { GET_PRODUCTS, ADD_PRODUCT, GET_BRANDS, GET_CATEGORY, GET_PRODUCT } from '../actions/productActions';
+import { GET_PRODUCTS, ADD_PRODUCT, GET_BRANDS, GET_CATEGORY, GET_PRODUCT,
+  GET_BRANDS_PRODUCTS,
+ } from '../actions/productActions';
 
 const initialState = {
   products: [],
   brands: [],
   categories: [],
+  brandsProduct : [],
 };
 
 const productReducer = (state = initialState, action) => {
@@ -19,6 +22,8 @@ const productReducer = (state = initialState, action) => {
       return { ...state, brands: action.payload };
     case GET_CATEGORY:
       return { ...state, categories: action.payload };
+    case GET_BRANDS_PRODUCTS:
+      return { ...state, brandsProduct: action.payload };  
     default:
       return state;
   }

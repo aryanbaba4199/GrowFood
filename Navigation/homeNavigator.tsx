@@ -12,7 +12,7 @@ const HomeNavigator = () => (
   <Stack.Navigator initialRouteName="Home">
     <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
     <Stack.Screen name="FilterView" component={FilterProduct} options={{ headerShown: false }} />
-    <Stack.Screen name = 'ProductDetails' component={ProductDetails} options={{ headerShown: false }} />
+    <Stack.Screen name = 'homeProductDetails' component={ProductDetails} options={{ headerShown: false }} />
     <Stack.Screen name = 'Checkout' component={CheckoutPage} options={{ headerShown: false }} />
   </Stack.Navigator>
 );

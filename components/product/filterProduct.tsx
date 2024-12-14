@@ -3,6 +3,7 @@ import { View, FlatList, Dimensions, StyleSheet, TouchableOpacity } from 'react-
 import { useNavigation, NavigationProp, RouteProp } from '@react-navigation/native';
 import { Card, Title, Paragraph, Button, Avatar } from 'react-native-paper';
 import { RootStackParamList } from '../menu/interface/rootStackParams';
+import { ScrollView } from 'react-native-gesture-handler';
 
 interface ProductItemProps {
   item: any;
@@ -24,7 +25,7 @@ const FilterProduct = ({ route }: ProductProps) => {
     const itemWidth = screenWidth / 2 - 16;
 
     const handleProductPress = (item: any) => {
-      navigation.navigate('ProductDetails', { product: item });
+      navigation.navigate('homeProductDetails', { product: item });
       
     };
   
@@ -43,6 +44,7 @@ const FilterProduct = ({ route }: ProductProps) => {
   };
 
   return (
+    <ScrollView>
     <View style={styles.container}>
       <FlatList
         data={filterProducts}
@@ -52,6 +54,7 @@ const FilterProduct = ({ route }: ProductProps) => {
         contentContainerStyle={styles.flatListContent}
       />
     </View>
+    </ScrollView>
   );
 };
 
@@ -69,7 +72,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#fff',
     width: '100%',
-    height: '95%',
     elevation: 4,
   },
   cardImage: {

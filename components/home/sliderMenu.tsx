@@ -2,6 +2,7 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity } from 'react-native';
 import { RootStackParamList } from '../menu/interface/rootStackParams';
+import { API_URL } from '../../appApi';
 
 type propsType = {
   category: any[],
@@ -31,8 +32,8 @@ const SliderMenu: React.FC<propsType> = ({ category, products }) => {
             onPress={() => handleClick(item.name)}
             activeOpacity={0.7} // Adjust the opacity when pressed
           >
-            <Image
-              source={{ uri: "https://raw.githubusercontent.com/dohooo/react-native-reanimated-carousel/HEAD/assets/home-banner.png" }}
+            <Image  
+              source={{ uri: `${item?.image ?? gfApi.image }` }}
               style={styles.image}
             />
             <Text style={styles.title}>{item.name}</Text>

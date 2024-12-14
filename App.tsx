@@ -3,18 +3,24 @@ import { Provider as PaperProvider } from 'react-native-paper';
 import AppNavigator from './components/footer/footerTab';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Alert } from 'react-native';
+import { Alert, StatusBar, StyleSheet, View } from 'react-native';
 import { Provider as ReduxProvider } from 'react-redux';
 import store from './redux/store';
 import { getProducts } from './redux/actions/productActions';
 import { getUserApi } from './components/API';
 
+import { GestureHandlerRootView } from 'react-native-gesture-handler'; // Import this
+
 // Define the shape of your global context
 interface GlobalContextType {
   userDetails: any;
+  refreshUser: boolean;
+  setRefreshUser: (refreshUser: boolean) => void;
   setUserDetails: (details: any) => void;
   address: any;
   setAddress: (address: any) => void;
+  notifier: any;
+  setNotifier: (notifier: any) => void;
   globalVariable: string;
   setGlobalVariable: (value: string) => void;
 }
@@ -22,73 +28,100 @@ interface GlobalContextType {
 // Create the context with default values
 export const GlobalContext = createContext<GlobalContextType>({
   userDetails: null,
-  setUserDetails: () => {},
+  setUserDetails: () => { },
+  refreshUser: false,
+  setRefreshUser: () => { },
   address: null,
-  setAddress: () => {},
+  setAddress: () => { },
   globalVariable: 'Initial Value',
-  setGlobalVariable: () => {},
+  notifier : {title : String, text : String, icon : String},
+  setNotifier : () => { },
+  setGlobalVariable: () => { },
 });
 
 export const GlobalProvider = ({ children }: { children: ReactNode }) => {
-  const [userDetails, setUserDetails] = useState(null);
+  const [userDetails, setUserDetails] = useState({
+    id: '', name: '', email: '', avatar: '', shopName: '', mobile: '',
+  });
   const [address, setAddress] = useState(null);
   const [globalVariable, setGlobalVariable] = useState('Initial Value');
+  const [refreshUser, setRefreshUser] = useState(true);
+  const [notifier, setNotifier] = useState({
+    title : '',
+    text : '',
+    icon : '',
+  });
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const token = await AsyncStorage.getItem('userToken');
-        if (token) {
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          const userRes = await axios.get(`${getUserApi}/me`);
-          if (userRes.status === 200) {
-            setUserDetails({
-              id: userRes.data._id,
-              name: userRes.data.name,
-              email: userRes.data.email,
-              avatar: 'https://example.com/default-profile-image.jpg'
-            });
+    fetchUserData();
+    setRefreshUser(false);
+  }, [refreshUser]);
 
-            const addressRes = await axios.get(`${getUserApi}/getAddress/${userRes.data._id}`);
-            if (addressRes.status === 200) {
-              setAddress(addressRes.data);
-            }
-          } else {
-            Alert.alert('Failed to fetch user data');
+  const fetchUserData = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        const userRes = await axios.get(`${getUserApi}/me`);
+        if (userRes.status === 200) {
+
+          setUserDetails({
+            mobile: userRes.data.user.mobile ?? "na",
+            shopName: userRes.data.user.shopName,
+            id: userRes.data.user._id,
+            name: userRes.data.user.name,
+            email: userRes.data.user.email,
+            avatar: userRes.data.user.image ?? "",
+          });
+
+          const addressRes = await axios.get(`${getUserApi}/getAddress/${userRes.data.user._id}`);
+          if (addressRes.status === 200) {
+            setAddress(addressRes.data);
           }
         } else {
-          // Handle unauthenticated state or navigate to SignIn
+          Alert.alert('Failed to fetch user data');
         }
-      } catch (error) {
-        console.error('Fetch user error:', error);
-        Alert.alert('Something went wrong while fetching user data');
       }
-    };
+    } catch (error) {
+      console.error('Fetch user error:', error);
+      Alert.alert('Something went wrong while fetching user data');
+    }
+  };
 
-    fetchUserData();
-  }, []);
+
 
   return (
-    <GlobalContext.Provider value={{ userDetails, setUserDetails, address, setAddress, globalVariable, setGlobalVariable }}>
+    <>
+    <GlobalContext.Provider value={{
+       refreshUser: false, setRefreshUser, userDetails, setUserDetails, address, setAddress, globalVariable,
+        setGlobalVariable, notifier, setNotifier
+        }}>
       {children}
     </GlobalContext.Provider>
+    </>
   );
 };
 
 function App(): React.ReactElement {
-  useEffect(() => {
-    // Fetch products as soon as the app starts
-    store.dispatch(getProducts());
-  }, []);
+  
 
   return (
+    <>
+      
+      <StatusBar backgroundColor="#15892e" barStyle="light-content" />
+  
     <GlobalProvider>
       <ReduxProvider store={store}>
-        <PaperProvider>
-          <AppNavigator />
-        </PaperProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+
+          <PaperProvider>
+            <AppNavigator />
+          </PaperProvider>
+
+        </GestureHandlerRootView>
       </ReduxProvider>
     </GlobalProvider>
+    </>
   );
 }
 

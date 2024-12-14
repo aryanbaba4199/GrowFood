@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dimensions, View, StyleSheet, Image, FlatList } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -11,38 +11,46 @@ const imageData = [
 
 const ImageCarousel: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % imageData.length);
+      const nextIndex = (currentIndex + 1) % imageData.length;
+      setCurrentIndex(nextIndex);
+
+      if (flatListRef.current) {
+        flatListRef.current.scrollToIndex({ animated: true, index: nextIndex });
+      }
     }, 3000); // Adjust interval as needed (milliseconds)
 
     return () => clearInterval(interval); // Cleanup interval on unmount
-  }, []);
+  }, [currentIndex]);
 
   return (
     <View style={styles.carouselContainer}>
       <FlatList
+        ref={flatListRef}
         data={imageData}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        renderItem={({ item, index }) => (
+        renderItem={({ item }) => (
           <View style={styles.carouselItem}>
             <Image source={{ uri: item }} style={styles.image} />
           </View>
         )}
         keyExtractor={(item, index) => index.toString()}
-        initialScrollIndex={currentIndex}
         getItemLayout={(data, index) => ({
           length: width,
           offset: width * index,
           index,
         })}
-        onViewableItemsChanged={({ viewableItems }) => {
-          if (viewableItems.length > 0) {
-            setCurrentIndex(viewableItems[0].index || 0);
-          }
+        onScrollToIndexFailed={(error) => {
+          const offset = error.averageItemLength * error.index;
+          flatListRef.current?.scrollToOffset({ offset, animated: true });
+          setTimeout(() => {
+            flatListRef.current?.scrollToIndex({ index: error.index, animated: true });
+          }, 100); // Reattempt scrolling to the index
         }}
       />
     </View>
@@ -51,23 +59,24 @@ const ImageCarousel: React.FC = () => {
 
 const styles = StyleSheet.create({
   carouselContainer: {
-    flex: 1,
+    marginTop : 10,
     marginHorizontal: 10,
   },
   carouselItem: {
-    width: width - 50, // Adjusted to fit within margins
-    height: width / 2, // Fixed height for each carousel item
+    width: width - 50, 
+    height: width / 2, 
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 25, // Rounded corners
-    borderColor: '#009867', // Border color
-    borderWidth: 2, // Border width
+   
+   
     marginHorizontal: 5, // Spacing between items
     overflow: 'hidden', // Ensures images are clipped to rounded corners
   },
   image: {
-    width: '100%',
+    width: width,
     height: '100%',
+    paddingHorizontal : 10,
     resizeMode: 'cover',
   },
 });
